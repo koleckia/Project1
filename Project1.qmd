@@ -1,0 +1,25 @@
+---
+title: "Project1"
+format: pdf
+editor: visual
+---
+
+
+
+##Step 1: Select columns
+
+##Step 2: Covert data into long format 
+
+##Step 3: Create new varaible 'grabbed'
+
+##Step 4: Create two new data sets 
+
+##Step 5: Create new variable that describes which state one of these country measurements correspondents to 
+
+##Step 6: 
+
+```{r}
+1 + 1
+```
+
+
