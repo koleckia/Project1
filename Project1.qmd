@@ -4,9 +4,12 @@ format: pdf
 editor: visual
 ---
 
-
-
 ##Step 1: Select columns
+
+```{r}
+read.csv('EDU01a.csv')
+```
+
 
 ##Step 2: Covert data into long format 
 
@@ -18,8 +21,5 @@ editor: visual
 
 ##Step 6: 
 
-```{r}
-1 + 1
-```
 
 
