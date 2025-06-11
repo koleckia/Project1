@@ -7,11 +7,23 @@ editor: visual
 ##Step 1: Select columns
 
 ```{r}
-read.csv('EDU01a.csv')
+library(dplyr)
+first_data <- read.csv('EDU01a.csv')
+
+#Select columns 
+long_updated <- first_data |> 
+  select(Area_name,STCOU,ends_with("D")) |> 
+  print(n=5) |>
+  
 ```
 
 
 ##Step 2: Covert data into long format 
+
+```{r}
+#Convert into long format
+```
+
 
 ##Step 3: Create new varaible 'grabbed'
 
