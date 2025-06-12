@@ -85,3 +85,91 @@ state_tibble <- state_tibble |>
     )
   )
 ```
+
+##Data Processing Function Writing
+
+```{r}
+# Function for reading in code
+read_csv_code <- function(filename, column_name = "New Column"){
+  library(dplyr)
+  library(tidyr)
+  first_data <- read.csv(filename)
+}
+
+# Function for steps 1 and 2  
+function_for_steps_1_2 <- function(first_data){
+  selected_columns <- first_data |> 
+    select(area_name = Area_name, STCOU, ends_with("D"))
+  pivoted_data <- selected_columns |>
+    pivot_longer(cols=3:12,names_to=column_name, values_to ="Enrollment_Value") |>
+    select(-STCOU)
+}
+
+# Function taking in the output from step 2 and executing step 3
+function_for_step_3 <- function(pivoted_data){
+  long_updated <- pivoted_data |>
+    mutate(Survey = substr(column_name, 1,7), Year = as.numeric(substr(column_name, 8,9))) |>
+    mutate(Year=ifelse(Year>80, 1900+Year,2000+Year)) |>
+    select(area_name, Survey, Year, Enrollment_Value)
+}
+
+# Function for step 4
+function_for_step_4 <- function(long_updated){
+  county_tibble <- long_updated|>
+    filter(grepl(",",area_name)) |> 
+    mutate(county=grep(pattern =", \\w\\w", area_name))
+  class(county_tibble) <- c("county", class(county_tibble))
+  state_tibble <- long_updated|>
+    filter(!grepl(",",area_name)) 
+  class(state_tibble) <- c("state", class(state_tibble))
+}
+
+# Function for step 5
+function_for_step_5 <- function(county_tibble){
+  county_tibble |>
+  mutate(state = substr(area_name, nchar(area_name)-2, nchar(area_name)))
+}
+
+# Function for step 6
+function_for_step_6 <- function(state_tibble){
+  state_tibble <- state_tibble |>
+  mutate(division = case_when(
+    area_name %in% c("CONNECTICUT","MAINE","MASSACHUSETTS","NEW HAMPSHIRE","RHODE ISLAND","VERMONT") ~ "New England",
+    area_name %in% c("NEW JERSEY","NEW YORK","PENNSYLVANIA") ~ "Mid-Atlantic",
+    area_name %in% c("ILLINOIS","INDIANA","MICHIGAN","OHIO","WISCONSIN") ~ "East North Central",
+    area_name %in% c("IOWA","KANSAS","MINNESOTA","MISSOURI","NEBRASKA","NORTH DAKOTA","SOUTH DAKOTA") ~ "West North Central",
+    area_name %in% c("DELAWARE","DISTRICT OF COLUMBIA","FLORIDA","GEORGIA","MARYLAND","NORTH CAROLINA","SOUTH CAROLINA","VIRGINIA","WEST VIRGINIA") ~ "South Atlantic",
+    area_name %in% c("ALABAMA","KENTUCKY","MISSISSIPPI","TENNESSEE") ~ "East South Central",
+    area_name %in% c("ARKANSAS","LOUISIANA","OKLAHOMA","TEXAS") ~ "West South Central",
+    area_name %in% c("ARIZONA","COLORADO","IDAHO","MONTANA","NEVADA","NEW MEXICO","UTAH","WYOMING") ~ "Mountain",
+    area_name %in% c("ALASKA","CALIFORNIA","HAWAII","OREGON","WASHINGTON") ~ "Pacific",
+    TRUE ~ "ERROR"
+    )
+  )
+}
+
+# Function for steps 4, 5, 6
+function_for_steps_4_5_6 <- function(long_updated){
+  county_tibble <- long_updated|>
+    filter(grepl(",",area_name)) |> 
+    mutate(county=grep(pattern =", \\w\\w", area_name))
+  class(county_tibble) <- c("county", class(county_tibble))
+  state_tibble <- long_updated|>
+    filter(!grepl(",",area_name)) 
+  class(state_tibble) <- c("state", class(state_tibble))
+  results5 <- function_for_step_5(county_tibble)
+  results6 <- function_for_step_6(state_tibble)
+  return(results5, results6)
+}
+  
+
+# Wrapper function
+processing_wrapper <- function(url, default_variable = "New Column"){
+  result <- read_csv_code(url, default_variable) |>
+    function_for_steps_1_2(first_data) |>
+    function_for_step_3(pivoted_data) |>
+    function_for_steps_4_5_6(long_updated)
+  return(result)
+}
+processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv", "Enrollment")
+```
