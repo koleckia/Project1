@@ -4,7 +4,7 @@ format: pdf
 editor: visual
 ---
 
-##Step 1: Select columns
+##Data Processing Step 1: Select columns
 
 ```{r}
 library(dplyr)
@@ -12,59 +12,76 @@ library(tidyr)
 
 first_data <- read.csv('EDU01a.csv')
 
-
 selected_columns <- first_data |> 
-  select(Area_name,STCOU,ends_with("D")) 
+  select(area_name = Area_name, STCOU, ends_with("D"))
 
+head(selected_columns, n = 5)
 ```
 
-
-##Step 2: Covert data into long format 
+##Data Processing Step 2: Covert data into long format
 
 ```{r}
 
 pivoted_data <- selected_columns |>
-  pivot_longer(cols=3:12,names_to="Enrollment", values_to ="Enrollment_Value") 
+  pivot_longer(cols=3:12,names_to="Enrollment", values_to ="Enrollment_Value") |>
+  select(-STCOU)
 
-print(pivoted_data)
+head(pivoted_data, n = 5)
 ```
 
-
-##Step 3: Seperate Enrollment Variable
+##Data Processing Step 3: Separate Enrollment Variable
 
 ```{r}
 
 long_updated <- pivoted_data |>
    mutate(Survey = substr(Enrollment, 1,7), Year = as.numeric(substr(Enrollment, 8,9))) |>
   mutate(Year=ifelse(Year>80, 1900+Year,2000+Year)) |>
-  select(Area_name, STCOU, Survey, Year, Enrollment_Value) |>
-  print(n=5)
+  select(area_name, Survey, Year, Enrollment_Value)
 
-print(long_updated)
-
+head(long_updated, n = 5)
 ```
 
-##Step 4: Create two new data sets: country_tibble and state_tibble 
+##Data Processing Step 4: Create two new data sets: country_tibble and state_tibble
 
 ```{r}
 county_tibble <- long_updated|>
-  filter(grepl(",",Area_name)) |> 
-  mutate(county=grep(pattern =", \\w\\w", Area_name))
+  filter(grepl(",",area_name)) |> 
+  mutate(county=grep(pattern =", \\w\\w", area_name))
 
 class(county_tibble) <- c("county", class(county_tibble))
   
-print(county_tibble)
+head(county_tibble, n = 10)
 
 state_tibble <- long_updated|>
-  filter(!grepl(",",Area_name)) |> 
+  filter(!grepl(",",area_name)) 
+
+class(state_tibble) <- c("state", class(state_tibble))
   
-print(state_tibble)
+head(state_tibble, n = 10)
 ```
 
+##Data Processing Step 5: Create new variable that describes which state one of these country measurements correspondents to
 
-##Step 5: Create new variable that describes which state one of these country measurements correspondents to 
+```{r}
+county_tibble |>
+  mutate(state = substr(area_name, nchar(area_name)-2, nchar(area_name)))
+```
 
-##Step 6: For non-county level tibble, create a variable called division 
+##Data Processing Step 6: For non-county level tibble, create a variable called division
 
-
-
+```{r}
+state_tibble <- state_tibble |>
+  mutate(division = case_when(
+    area_name %in% c("CONNECTICUT","MAINE","MASSACHUSETTS","NEW HAMPSHIRE","RHODE ISLAND","VERMONT") ~ "New England",
+    area_name %in% c("NEW JERSEY","NEW YORK","PENNSYLVANIA") ~ "Mid-Atlantic",
+    area_name %in% c("ILLINOIS","INDIANA","MICHIGAN","OHIO","WISCONSIN") ~ "East North Central",
+    area_name %in% c("IOWA","KANSAS","MINNESOTA","MISSOURI","NEBRASKA","NORTH DAKOTA","SOUTH DAKOTA") ~ "West North Central",
+    area_name %in% c("DELAWARE","DISTRICT OF COLUMBIA","FLORIDA","GEORGIA","MARYLAND","NORTH CAROLINA","SOUTH CAROLINA","VIRGINIA","WEST VIRGINIA") ~ "South Atlantic",
+    area_name %in% c("ALABAMA","KENTUCKY","MISSISSIPPI","TENNESSEE") ~ "East South Central",
+    area_name %in% c("ARKANSAS","LOUISIANA","OKLAHOMA","TEXAS") ~ "West South Central",
+    area_name %in% c("ARIZONA","COLORADO","IDAHO","MONTANA","NEVADA","NEW MEXICO","UTAH","WYOMING") ~ "Mountain",
+    area_name %in% c("ALASKA","CALIFORNIA","HAWAII","OREGON","WASHINGTON") ~ "Pacific",
+    TRUE ~ "ERROR"
+    )
+  )
+```
