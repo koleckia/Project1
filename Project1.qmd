@@ -187,23 +187,30 @@ results2 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU0
 CombiningFunction <- function(data1,data2){
   county_data <- bind_rows(data1[1:5],data2[1:5])
   noncounty_data <- bind_rows(data1[6:10],data2[6:10])
-  combined <- tibble(county_data=list(county_data),noncounty_data=list(noncounty_data))
-  return(combined)
-}
+   combined <- list(county_data=tibble(county_data),
+                    noncounty_data=tibble(noncounty_data))
+return(combined)
+ }
+
 
 Data_Combined<-CombiningFunction(results1,results2)
-Data_Combined
+class(Data_Combined)
+class(Data_Combined$county_data)
 
 ```
 
 ##Writing a generic function of summarizing Step 1: Test out function
 
 ```{r}
-
-plot.state <- function(df,var_name="Enrollment"){
-  
-  
+plot.state <- function(df,var_name="state_data.Enrollment_Value"){
+  plotting_data -> df|> group_by(state_data.division, state_data.Year)|>
+    summarize(y_axis=mean(get(var_name))) |>
+    filter(state_data.division != 'ERROR') |>
+   
+    plot(state_data.division, y_axis)
 }
+
+plot.state(Data_Combined$noncounty_data,)
 
 
 ```
