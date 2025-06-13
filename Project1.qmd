@@ -174,8 +174,8 @@ function_for_steps_4_5_6 <- function(long_updated){
 processing_wrapper <- function(url,column_name){
   result <- read_csv_code(url) |>
     (\(data)function_for_steps_1_2(data,column_name))() |>
-    (\(data)function_for_step_3(data,column_name))() #|>
-    #function_for_steps_4_5_6()
+    (\(data)function_for_step_3(data,column_name))() |>
+    function_for_steps_4_5_6()
   
   return(result)
 }
@@ -184,12 +184,17 @@ processing_wrapper <- function(url,column_name){
 results1 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv",'Enrollment')
 results2 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv",'Enrollment')
 
+
 CombiningFunction <- function(data1,data2){
-  
-  
+  county_data <- bind_rows(data1[1:5],data2[1:5])
+  noncounty_data <- bind_rows(data1[6:10],data2[6:10])
+  return(list=c(county_data,noncounty_data))
 }
 
+Data_Combined<-CombiningFunction(results1,results2)
 ```
 
 ##Writing a generic function of summarizing Step 1: Test out function 
+```{r}
 
+```
