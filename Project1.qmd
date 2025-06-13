@@ -184,17 +184,16 @@ results1 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU0
 results2 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv",'Enrollment')
 
 
-
 CombiningFunction <- function(data1,data2){
-  county_data <- bind_rows(data1[1:5],data2[1:5]) |>
-    select(area_name = county_data.area_name, Survey = county_data.Survey, Year = county_data.Year, Enrollment_Value = county_data.Enrollment_Value)
-  noncounty_data <- bind_rows(data1[6:10],data2[6:10]) |>
-    select(area_name = state_data.area_name, Survey = state_data.Survey, Year = state_data.Year, state_data.Enrollment_Value)
-  combined <- bind_rows(county_data,noncounty_data)
+  county_data <- bind_rows(data1[1:5],data2[1:5])
+  noncounty_data <- bind_rows(data1[6:10],data2[6:10])
+  combined <- tibble(county_data=list(county_data),noncounty_data=list(noncounty_data))
   return(combined)
 }
 
 Data_Combined<-CombiningFunction(results1,results2)
+Data_Combined
+
 ```
 
 ##Writing a generic function of summarizing Step 1: Test out function
@@ -205,4 +204,6 @@ plot.state <- function(df,var_name="Enrollment"){
   
   
 }
+
+
 ```
