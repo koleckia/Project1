@@ -63,7 +63,7 @@ head(state_tibble, n = 10)
 ##Data Processing Step 5: Create new variable that describes which state one of these country measurements correspondents to
 
 ```{r}
-county_tibble |>
+county_tibble <-county_tibble |>
   mutate(state = substr(area_name, nchar(area_name)-2, nchar(area_name)))
 ```
 
@@ -131,7 +131,7 @@ function_for_step_4 <- function(long_updated){
 
 # Function for step 5
 function_for_step_5 <- function(county_tibble){
-  county_tibble |>
+  county_tibble <-county_tibble |>
   mutate(state = substr(area_name, nchar(area_name)-2, nchar(area_name)))
   return(county_tibble)
 }
@@ -185,8 +185,8 @@ results2 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU0
 
 
 CombiningFunction <- function(data1,data2){
-  county_data <- bind_rows(data1[1:5],data2[1:5])
-  noncounty_data <- bind_rows(data1[6:10],data2[6:10])
+  county_data <- bind_rows(data1[1:6],data2[1:6])
+  noncounty_data <- bind_rows(data1[7:11],data2[7:11])
    combined <- list(county_data=tibble(county_data),
                     noncounty_data=tibble(noncounty_data))
 return(combined)
@@ -202,15 +202,33 @@ class(Data_Combined$county_data)
 ##Writing a generic function of summarizing Step 1: Test out function
 
 ```{r}
+library(ggplot2)
 plot.state <- function(df,var_name="state_data.Enrollment_Value"){
-  plotting_data -> df|> group_by(state_data.division, state_data.Year)|>
+   plot_data <- df|> group_by(state_data.division, state_data.Year)|>
     summarize(y_axis=mean(get(var_name))) |>
-    filter(state_data.division != 'ERROR') |>
+    filter(state_data.division != 'ERROR') 
    
-    plot(state_data.division, y_axis)
+   print(plot_data)
+  ggplot(data=plot_data, aes(x=state_data.Year,y= y_axis,color=state_data.division)) + geom_smooth() 
 }
 
 plot.state(Data_Combined$noncounty_data,)
 
+```
+
+##Writing a generic function of summarizing Step 1: Create function for the class county
+
+```{r}
+
+plot.county <- function(df,var_name="county_data.Enrollment_Value",state = " AL ",
+                        direction ="Top", n=5){
+   plot_data <- df|> filter(county_data.state == state)|>
+    summarize(y_axis=mean(get(var_name))) |>
+     arrange(ifelse(direction=="Top",y_axis,desc(y_axis)))
+   
+   print(plot_data)
+}
+
+plot.county(Data_Combined$county_data,)
 
 ```
