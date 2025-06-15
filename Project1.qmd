@@ -202,6 +202,7 @@ class(Data_Combined$county_data)
 ##Writing a generic function of summarizing Step 1: Test out function
 
 ```{r}
+#Plot function for state data
 library(ggplot2)
 plot.state <- function(df,var_name="state_data.Enrollment_Value"){
    plot_data <- df|> group_by(state_data.division, state_data.Year)|>
@@ -219,16 +220,26 @@ plot.state(Data_Combined$noncounty_data,)
 ##Writing a generic function of summarizing Step 1: Create function for the class county
 
 ```{r}
-
-plot.county <- function(df,var_name="county_data.Enrollment_Value",state = " AL ",
-                        direction ="Top", n=5){
-   plot_data <- df|> filter(county_data.state == state)|>
-    summarize(y_axis=mean(get(var_name))) |>
-     arrange(ifelse(direction=="Top",y_axis,desc(y_axis)))
+#Plot function for county data
+plot.county <- function(df,var_name="county_data.Enrollment_Value", state = ' AL',order='TOP',
+                        n=5){
+   plot_data <- df |> filter(county_data.state== state) |>
+   group_by(county_data.area_name)|>
+     summarize(y_axis=mean(get(var_name))) 
+   
+   if(order=='TOP'){
+     plot_data <- plot_data |>
+       arrange(y_axis) |>
+       slice_head(n=n)
+   }else{
+     plot_data <- plot_data |>
+       arrange(desc(y_axis))|>
+       slice_head(n=n)
+   }
    
    print(plot_data)
 }
 
-plot.county(Data_Combined$county_data,)
+plot.county(Data_Combined$county_data)
 
 ```
