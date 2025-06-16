@@ -4,7 +4,7 @@ format: pdf
 editor: visual
 ---
 
-## Data Processing 
+## Data Processing
 
 ### Step 1
 
@@ -253,6 +253,33 @@ plot.county <- function(df,var_name="county_data.Enrollment_Value", state = ' AL
   ggplot(data=plot_data2, aes(x=county_data.area_name,y= y_axis/1000)) + geom_point() + labs(y="Average Enrollment (in thousands)", x="Area Name"
   )
 }
+plot.county <- function(df,var_name="county_data.Enrollment_Value", state = ' AL',group='TOP',
+                        n=5){
+   plot_data <- df |> filter(county_data.state== state) |>
+   group_by(county_data.area_name)|>
+     summarize(y_axis=mean(get(var_name))) 
+   
+   print(plot_data)
+   if(group=='TOP'){
+     plot_data2 <- plot_data |>
+       arrange(desc(y_axis)) |>
+       slice_head(n= n) 
+   } else {
+     plot_data2 <- plot_data |> 
+       arrange(y_axis)|>
+       slice_head(n= n) 
+   }
+
+   plot_data2$county_data.area_name <-factor(plot_data2$county_data.area_name, 
+                                             levels= plot_data2$county_data.area_name)
+    
+   minimum <- floor(min(plot_data2$y_axis))
+   maximum <-ceiling(max(plot_data2$y_axis))
+   
+   print(plot_data2)
+   ggplot(data=plot_data2, aes(x=county_data.area_name,y= y_axis, group =1)) + geom_line() +geom_point() + labs(y="Average Enrollment", x="County Name") +scale_y_continuous(limits=c(minimum,maximum),breaks = seq(minimum,maximum,10000))
+
+}
 
 plot.county(Data_Combined[[1]])
 plot.county(Data_Combined[[1]],state = ' AZ')
@@ -276,6 +303,32 @@ plot.county(EDU01ab[[1]], state = ' SC', order = 'Bottom', n = 7)
 plot.county(EDU01ab[[1]])
 plot.county(EDU01ab[[1]], state = ' PA', order = 'Top', n = 8)
 
+#Orginal two URlS
+
+results1 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv",'Enrollment')
+results2 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv",'Enrollment')
+Data_Combined<-CombiningFunction(results1,results2)
+plot.state(Data_Combined[[2]],)
+plot.county(Data_Combined[[1]],state = ' NC',group = 'TOP', n=20)
+plot.county(Data_Combined[[1]],state = ' SC',group = 'BOTTOM', n=7)
+plot.county(Data_Combined[[1]])
+plot.county(Data_Combined[[1]],state = ' PA',group = 'TOP', n=8)
+
+#Reading in additional four URLs
+resultsA <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01a.csv",'Enrollment')
+resultsB <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01b.csv",'Enrollment')
+resultsC <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01c.csv",'Enrollment')
+resultsD <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01d.csv",'Enrollment')
+
+#Run combine function 
+CombinationA<-CombiningFunction(resultsA,resultsB)
+CombinationB <- CombiningFunction(resultsC,resultsD)
+FinalCombination <-CombiningFunction(CombinationA,CombinationB)
+plot.state(FinalCombination[[2]],)
+plot.county(FinalCombination[[1]],state = ' CA',group = 'TOP', n=15)
+plot.county(FinalCombination[[1]],state = ' TX',group = 'TOP', n=4)
+plot.county(FinalCombination[[1]])
+plot.county(FinalCombination[[1]],state = ' NY',group = 'TOP', n=10)
 ```
 
 ### Run Data Processing Function on Four Other Data Sets
