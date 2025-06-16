@@ -222,25 +222,28 @@ plot.state(Data_Combined[[2]],)
 
 ```{r}
 #Plot function for county data
-plot.county <- function(df,var_name="county_data.Enrollment_Value", state = ' AL',order='TOP',
+plot.county <- function(df,var_name="county_data.Enrollment_Value", state = ' AL',group='TOP',
                         n=5){
    plot_data <- df |> filter(county_data.state== state) |>
    group_by(county_data.area_name)|>
      summarize(y_axis=mean(get(var_name))) 
    
-   if(order=='TOP'){
+   print(plot_data)
+   if(group=='TOP'){
      plot_data2 <- plot_data |>
        arrange(desc(y_axis)) |>
-       slice_head(n= n)
+       slice_head(n= n) 
    } else {
-     plot_data2 <- plot_data |>
+     plot_data2 <- plot_data |> 
        arrange(y_axis)|>
-       slice_head(n= n)
+       slice_head(n= n) 
    }
 
+   plot_data2$county_data.area_name <-factor(plot_data2$county_data.area_name, 
+                                             levels= plot_data2$county_data.area_name)
+     
    print(plot_data2)
-   ggplot(data=plot_data2, aes(x=county_data.area_name,y= y_axis)) + geom_line() +
-    labs(y="Average Enrollment", x="Area Name")
+   ggplot(data=plot_data2, aes(x=county_data.area_name,y= y_axis, group =1)) + geom_line() +geom_point() + labs(y="Average Enrollment", x="County Name") +scale_y_continuous(limits=c(10000,150000),breaks = seq(10000,120000,10000))
 }
 
 plot.county(Data_Combined[[1]])
@@ -252,6 +255,19 @@ plot.county(Data_Combined[[1]],state = ' PA')
 
 ##Putting it Together 
 ```{r}
+
+#Orginal two URlS
+
+results1 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv",'Enrollment')
+results2 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv",'Enrollment')
+Data_Combined<-CombiningFunction(results1,results2)
+plot.state(Data_Combined[[2]],)
+plot.county(Data_Combined[[1]],state = ' NC',group = 'TOP', n=20)
+plot.county(Data_Combined[[1]],state = ' SC',group = 'BOTTOM', n=7)
+plot.county(Data_Combined[[1]])
+plot.county(Data_Combined[[1]],state = ' PA',group = 'TOP', n=8)
+#Additional four URLs
+
 
 ```
 
