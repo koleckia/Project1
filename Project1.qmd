@@ -210,10 +210,11 @@ plot.state <- function(df,var_name="state_data.Enrollment_Value"){
     filter(state_data.division != 'ERROR') 
    
    print(plot_data)
-  ggplot(data=plot_data, aes(x=state_data.Year,y= y_axis,color=state_data.division)) + geom_smooth() 
+  ggplot(data=plot_data, aes(x=state_data.Year,y= y_axis,color=state_data.division)) + geom_line() +
+    labs(y="Average Enrollment", x="Year", color="Division")
 }
 
-plot.state(Data_Combined$noncounty_data,)
+plot.state(Data_Combined[[2]],)
 
 ```
 
@@ -228,18 +229,29 @@ plot.county <- function(df,var_name="county_data.Enrollment_Value", state = ' AL
      summarize(y_axis=mean(get(var_name))) 
    
    if(order=='TOP'){
-     plot_data <- plot_data |>
-       arrange(y_axis) |>
-       slice_head(n=n)
-   }else{
-     plot_data <- plot_data |>
-       arrange(desc(y_axis))|>
-       slice_head(n=n)
+     plot_data2 <- plot_data |>
+       arrange(desc(y_axis)) |>
+       slice_head(n= n)
+   } else {
+     plot_data2 <- plot_data |>
+       arrange(y_axis)|>
+       slice_head(n= n)
    }
-   
-   print(plot_data)
+
+   print(plot_data2)
+   ggplot(data=plot_data2, aes(x=county_data.area_name,y= y_axis)) + geom_line() +
+    labs(y="Average Enrollment", x="Area Name")
 }
 
-plot.county(Data_Combined$county_data)
+plot.county(Data_Combined[[1]])
+plot.county(Data_Combined[[1]],state = ' AZ')
+plot.county(Data_Combined[[1]],state = ' PA')
 
 ```
+
+
+##Putting it Together 
+```{r}
+
+```
+
