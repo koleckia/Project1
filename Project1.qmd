@@ -4,24 +4,28 @@ format: pdf
 editor: visual
 ---
 
-##Data Processing Step 1: Select columns
+## Data Processing 
+
+### Step 1
 
 ```{r}
 library(dplyr)
 library(tidyr)
 
+# Read in data
 first_data <- read.csv('EDU01a.csv')
 
+# Select columns
 selected_columns <- first_data |> 
   select(area_name = Area_name, STCOU, ends_with("D"))
 
 head(selected_columns, n = 5)
 ```
 
-##Data Processing Step 2: Covert data into long format
+### Step 2
 
 ```{r}
-
+# Convert data into long format
 pivoted_data <- selected_columns |>
   pivot_longer(cols=3:12,names_to="Enrollment", values_to ="Enrollment_Value") |>
   select(-STCOU)
@@ -29,10 +33,10 @@ pivoted_data <- selected_columns |>
 head(pivoted_data, n = 5)
 ```
 
-##Data Processing Step 3: Separate Enrollment Variable
+### Step 3
 
 ```{r}
-
+# Separate enrollment variable
 long_updated <- pivoted_data |>
    mutate(Survey = substr(Enrollment, 1,7), Year = as.numeric(substr(Enrollment, 8,9))) |>
   mutate(Year=ifelse(Year>80, 1900+Year,2000+Year)) |>
@@ -41,9 +45,10 @@ long_updated <- pivoted_data |>
 head(long_updated, n = 5)
 ```
 
-##Data Processing Step 4: Create two new data sets: country_tibble and state_tibble
+### Step 4
 
 ```{r}
+# Create two new data sets: county_tibble and state_tibble
 county_tibble <- long_updated|>
   filter(grepl(",",area_name)) |> 
   mutate(county=grep(pattern =", \\w\\w", area_name))
@@ -60,16 +65,18 @@ class(state_tibble) <- c("state", class(state_tibble))
 head(state_tibble, n = 10)
 ```
 
-##Data Processing Step 5: Create new variable that describes which state one of these country measurements correspondents to
+### Step 5
 
 ```{r}
+# Creating a new variable that describes which state one of these county measurements corresponds to
 county_tibble <-county_tibble |>
   mutate(state = substr(area_name, nchar(area_name)-2, nchar(area_name)))
 ```
 
-##Data Processing Step 6: For non-county level tibble, create a variable called division
+### Step 6
 
 ```{r}
+# Creating a variable called division for non-county level tibble
 state_tibble <- state_tibble |>
   mutate(division = case_when(
     area_name %in% c("CONNECTICUT","MAINE","MASSACHUSETTS","NEW HAMPSHIRE","RHODE ISLAND","VERMONT") ~ "New England",
@@ -86,7 +93,7 @@ state_tibble <- state_tibble |>
   )
 ```
 
-##Data Processing Function Writing
+## Data Processing Function Writing
 
 ```{r}
 # Function for reading in code
@@ -180,36 +187,39 @@ processing_wrapper <- function(url,column_name){
   return(result)
 }
 
+# Test wrapper function on EDU01a and EDU01b data
 results1 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv",'Enrollment')
 results2 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv",'Enrollment')
 
-
+# Combining Function
 CombiningFunction <- function(data1,data2){
   county_data <- bind_rows(data1[1:6],data2[1:6])
   noncounty_data <- bind_rows(data1[7:11],data2[7:11])
-   combined <- list(county_data=tibble(county_data),
-                    noncounty_data=tibble(noncounty_data))
-return(combined)
- }
+    combined <- list(county_data=tibble(county_data),
+                     noncounty_data=tibble(noncounty_data))
+  return(combined)
+}
 
-
+# Test Combining Function on EDU01a and EDU01b data processed above
 Data_Combined<-CombiningFunction(results1,results2)
 class(Data_Combined)
 class(Data_Combined$county_data)
 
 ```
 
-##Writing a generic function of summarizing Step 1: Test out function
+## Writing a Generic Function for Summarizing
+
+### Plot Function for State Data
 
 ```{r}
 #Plot function for state data
 library(ggplot2)
 plot.state <- function(df,var_name="state_data.Enrollment_Value"){
-   plot_data <- df|> group_by(state_data.division, state_data.Year)|>
+  plot_data <- df|> group_by(state_data.division, state_data.Year)|>
     summarize(y_axis=mean(get(var_name))) |>
     filter(state_data.division != 'ERROR') 
    
-   print(plot_data)
+  print(plot_data)
   ggplot(data=plot_data, aes(x=state_data.Year,y= y_axis,color=state_data.division)) + geom_line() +
     labs(y="Average Enrollment", x="Year", color="Division")
 }
@@ -218,29 +228,30 @@ plot.state(Data_Combined[[2]],)
 
 ```
 
-##Writing a generic function of summarizing Step 1: Create function for the class county
+### Plot Function for County Data
 
 ```{r}
 #Plot function for county data
-plot.county <- function(df,var_name="county_data.Enrollment_Value", state = ' AL',order='TOP',
-                        n=5){
-   plot_data <- df |> filter(county_data.state== state) |>
-   group_by(county_data.area_name)|>
-     summarize(y_axis=mean(get(var_name))) 
+plot.county <- function(df,var_name="county_data.Enrollment_Value", state = ' AL' ,order='Top', n=5){
+  plot_data <- df |> 
+    filter(county_data.state== state) |>
+    group_by(county_data.area_name) |>
+    summarize(y_axis=mean(get(var_name))) 
    
-   if(order=='TOP'){
-     plot_data2 <- plot_data |>
-       arrange(desc(y_axis)) |>
-       slice_head(n= n)
-   } else {
-     plot_data2 <- plot_data |>
-       arrange(y_axis)|>
-       slice_head(n= n)
-   }
+  if(order=='Top'){
+    plot_data2 <- plot_data |>
+      arrange(desc(y_axis)) |>
+      slice_head(n= n)
+  }
+  else {
+    plot_data2 <- plot_data |>
+      arrange(y_axis)|>
+      slice_head(n= n)
+  }
 
-   print(plot_data2)
-   ggplot(data=plot_data2, aes(x=county_data.area_name,y= y_axis)) + geom_line() +
-    labs(y="Average Enrollment", x="Area Name")
+  print(plot_data2)
+  ggplot(data=plot_data2, aes(x=county_data.area_name,y= y_axis/1000)) + geom_point() + labs(y="Average Enrollment (in thousands)", x="Area Name"
+  )
 }
 
 plot.county(Data_Combined[[1]])
@@ -249,9 +260,43 @@ plot.county(Data_Combined[[1]],state = ' PA')
 
 ```
 
+## Putting it Together
 
-##Putting it Together 
+### Running Original Enrollment Data
+
 ```{r}
+EDU01a <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv",'Enrollment')
+EDU01b <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv",'Enrollment')
+
+EDU01ab<-CombiningFunction(EDU01a, EDU01b)
+
+plot.state(EDU01ab[[2]])
+plot.county(EDU01ab[[1]], state =' NC', order = 'Top', n = 20)
+plot.county(EDU01ab[[1]], state = ' SC', order = 'Bottom', n = 7)
+plot.county(EDU01ab[[1]])
+plot.county(EDU01ab[[1]], state = ' PA', order = 'Top', n = 8)
 
 ```
 
+### Run Data Processing Function on Four Other Data Sets
+
+```{r}
+PST01a <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01a.csv",'Enrollment')
+PST01b <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01b.csv",'Enrollment')
+PST01c <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01c.csv",'Enrollment')
+PST01d <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01d.csv",'Enrollment')
+
+PST01ab <- CombiningFunction(PST01a, PST01b)
+PST01abc <- CombiningFunction(PST01ab, PST01c)
+PST01abcd <- CombiningFunction(PST01abc, PST01d)
+```
+
+### Plot Other Data Sets with Plot Function
+
+```{r}
+plot.state(PST01abcd[[2]])
+plot.county(PST01abcd[[1]], state =' CA', order = 'Top', n = 15)
+plot.county(PST01abcd[[1]], state = ' TX', order = 'Top', n = 4)
+plot.county(PST01abcd[[1]])
+plot.county(PST01abcd[[1]], state = ' NY', order = 'Top', n = 10)
+```
