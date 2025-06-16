@@ -241,9 +241,12 @@ plot.county <- function(df,var_name="county_data.Enrollment_Value", state = ' AL
 
    plot_data2$county_data.area_name <-factor(plot_data2$county_data.area_name, 
                                              levels= plot_data2$county_data.area_name)
-     
+    
+   minimum <- floor(min(plot_data2$y_axis))
+   maximum <-ceiling(max(plot_data2$y_axis))
+   
    print(plot_data2)
-   ggplot(data=plot_data2, aes(x=county_data.area_name,y= y_axis, group =1)) + geom_line() +geom_point() + labs(y="Average Enrollment", x="County Name") +scale_y_continuous(limits=c(10000,150000),breaks = seq(10000,120000,10000))
+   ggplot(data=plot_data2, aes(x=county_data.area_name,y= y_axis, group =1)) + geom_line() +geom_point() + labs(y="Average Enrollment", x="County Name") +scale_y_continuous(limits=c(minimum,maximum),breaks = seq(minimum,maximum,10000))
 }
 
 plot.county(Data_Combined[[1]])
@@ -266,8 +269,21 @@ plot.county(Data_Combined[[1]],state = ' NC',group = 'TOP', n=20)
 plot.county(Data_Combined[[1]],state = ' SC',group = 'BOTTOM', n=7)
 plot.county(Data_Combined[[1]])
 plot.county(Data_Combined[[1]],state = ' PA',group = 'TOP', n=8)
-#Additional four URLs
 
+#Reading in additional four URLs
+resultsA <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01a.csv",'Enrollment')
+resultsB <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01b.csv",'Enrollment')
+resultsC <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01c.csv",'Enrollment')
+resultsD <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01d.csv",'Enrollment')
 
+#Run combine function 
+CombinationA<-CombiningFunction(resultsA,resultsB)
+CombinationB <- CombiningFunction(resultsC,resultsD)
+FinalCombination <-CombiningFunction(CombinationA,CombinationB)
+plot.state(FinalCombination[[2]],)
+plot.county(FinalCombination[[1]],state = ' CA',group = 'TOP', n=15)
+plot.county(FinalCombination[[1]],state = ' TX',group = 'TOP', n=4)
+plot.county(FinalCombination[[1]])
+plot.county(FinalCombination[[1]],state = ' NY',group = 'TOP', n=10)
 ```
 
