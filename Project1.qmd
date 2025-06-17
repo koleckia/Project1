@@ -152,7 +152,7 @@ function_for_step_4 <- function(long_updated){
   state_tibble <- long_updated|>
     filter(!grepl(",",area_name)) 
   class(state_tibble) <- c("state", class(state_tibble))
-  return(county_tibble, state_tibble)
+  return(list=c(county_tibble, state_tibble))
 }
 
 # Function for step 5
@@ -230,6 +230,15 @@ results2 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU0
 ```{r, results = "hide"}
 # Combining Function
 CombiningFunction <- function(data1,data2){
+#  input <- list(...)
+#  for(i in 1:length(input)) {
+#    current_input_c <- input[[i]]
+#    county_data <- bind_rows(current_input_c[1:6])
+#    return(county_data)
+#    current_input_s <- input[[i]]
+#    noncounty_data <- bind_rows(current_input_s[7:11])
+#    return(noncounty_data)
+#  }
   county_data <- bind_rows(data1[1:6],data2[1:6])
   noncounty_data <- bind_rows(data1[7:11],data2[7:11])
     combined <- list(county_data=tibble(county_data),
