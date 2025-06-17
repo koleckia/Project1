@@ -5,11 +5,14 @@ date: 6/17/2025
 format: pdf
 editor: visual
 ---
+
 ```{r, global_options, include = FALSE}
+# Prevent lines going off the page
 install.packages("formatR", repos = "http://cran.rstudio.com")
 library(formatR)
 knitr::opts_chunk$set(message = FALSE, tidy.opts=list(width.cutoff=40),tidy=TRUE)
 ```
+
 ## Data Processing
 
 ### Step 1
@@ -276,7 +279,8 @@ library(ggplot2)
 plot.state <- function(df,var_name="state_data.Enrollment_Value"){
   plot_data <- df|> group_by(state_data.division, state_data.Year)|> 
     #groups our data by division and year
-    summarize(y_axis=mean(get(var_name))) |> #gets our mean of enrollment by year and division
+    summarize(y_axis=mean(get(var_name))) |> 
+    #gets our mean of enrollment by year and division
     filter(state_data.division != 'ERROR') #filter out the ERROR
    
   print(plot_data)
@@ -299,7 +303,7 @@ plot.county <- function(df,var_name="county_data.Enrollment_Value",
   plot_data <- df |> 
     filter(county_data.state== state) |> #filter by state
     group_by(county_data.area_name) |> #group by area name
-    summarize(y_axis=mean(get(var_name)))  #obtain mean of enrollment for each area name
+    summarize(y_axis=mean(get(var_name))) #obtain mean of enrollment for each area name
 
 #if else for the top or bottom parameter
   if(order=='Top'){
@@ -316,7 +320,7 @@ plot.county <- function(df,var_name="county_data.Enrollment_Value",
   print(plot_data2)
   #Create plot of the mean enrollment for each area_name in the state 
   #plot specifically the top or bottom n of mean enrollment in that area
-  ggplot(data=plot_data2, aes(x=county_data.area_name,y= y_axis/1000, group = 1)) + 
+  ggplot(data=plot_data2, aes(x=county_data.area_name,y= y_axis/1000, group = 1)) +
     #divide y-axis values by 1000 so that the y-axis labels are more readable
     geom_point() + #create scatterplot
     labs(y="Average Enrollment (in thousands)", x="County") + 
