@@ -28,7 +28,7 @@ head(selected_columns, n = 5)
 
 ### Step 2
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 # Convert data into long format- each row only has one enrollment value for that Area_name
 pivoted_data <- selected_columns |>
   pivot_longer(cols=3:12,names_to="Enrollment", values_to ="Enrollment_Value") |>
@@ -40,7 +40,7 @@ head(pivoted_data, n = 5)
 
 ### Step 3
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 # Separate enrollment variable
 long_updated <- pivoted_data |>
    mutate(Survey = substr(Enrollment, 1,7), #pull measurement info
@@ -54,7 +54,7 @@ head(long_updated, n = 5)
 
 ### Step 4
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 # Create two new data sets: one with only county data and one with only non-county data
 county_tibble <- long_updated|>
   filter(grepl(",",area_name)) |> 
@@ -76,7 +76,7 @@ head(state_tibble, n = 10)
 
 ### Step 5
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 # Creating a new variable that describes which state one of these county measurements corresponds to
 county_tibble <-county_tibble |>
   mutate(state = substr(area_name, nchar(area_name)-2, nchar(area_name)))
@@ -84,7 +84,7 @@ county_tibble <-county_tibble |>
 
 ### Step 6
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 # Creating a variable called division for non-county level tibble
 state_tibble <- state_tibble |>
   mutate(division = case_when(
@@ -106,7 +106,7 @@ state_tibble <- state_tibble |>
 
 ### Write one function that does steps 1 & 2 above
 
-```{r, results = "hide"}
+```{r, message = FALSE, warning = FALSE, results = "hide"}
 # Function for reading in code
 read_csv_code <- function(filename,column_name){
   library(dplyr)
@@ -129,7 +129,7 @@ function_for_steps_1_2 <- function(first_data, column_name){
 
 ### Write a function that takes in the output of step 2 and does step 3 above
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 # Function taking in the output from step 2 and executing step 3
 function_for_step_3 <- function(pivoted_data,column_name){
   long_updated <- pivoted_data |>
@@ -142,7 +142,7 @@ function_for_step_3 <- function(pivoted_data,column_name){
 
 ### Write a function to do step 5
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 # Function for step 4 (need before step 5)
 function_for_step_4 <- function(long_updated){
   county_tibble <- long_updated|>
@@ -165,7 +165,7 @@ function_for_step_5 <- function(county_tibble){
 
 ### Write a function to do step 6
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 # Function for step 6
 function_for_step_6 <- function(state_tibble){
   state_tibble <- state_tibble |>
@@ -188,7 +188,7 @@ function_for_step_6 <- function(state_tibble){
 
 ### Write a function that takes the output from step 3 and creates the two tibbles in step 4, calls the above two functions to perform steps 5 and 6, and returns two final tibbles
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 # Function for steps 4, 5, 6
 function_for_steps_4_5_6 <- function(long_updated){
   county_tibble <- long_updated|>
@@ -206,7 +206,7 @@ function_for_steps_4_5_6 <- function(long_updated){
 
 ### Put the above functions into a wrapper function
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 # Wrapper function that takes in the URL of a .csv file and the optional argument for the variable name, calls the functions written above, and returns two tibbles
 processing_wrapper <- function(url,column_name){
   result <- read_csv_code(url) |>
@@ -219,7 +219,7 @@ processing_wrapper <- function(url,column_name){
 
 ### Call Wrapper Function to Combine Data
 
-```{r, results = "hide"}
+```{r, message = FALSE, warning = FALSE, results = "hide"}
 # Use wrapper function on EDU01a and EDU01b data
 results1 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv",'Enrollment')
 results2 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv",'Enrollment')
@@ -227,7 +227,7 @@ results2 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU0
 
 ### Write Combining Function
 
-```{r, results = "hide"}
+```{r, message = FALSE, warning = FALSE, results = "hide"}
 # Combining Function with minimum 2 and maximum 4 input datasets
 CombiningFunction <- function(data1,data2,data3 = NULL,data4 = NULL){
   input <- list(data1,data2,data3,data4)
@@ -248,7 +248,7 @@ Data_Combined<-CombiningFunction(results1,results2)
 
 ### Plot Function for State Data
 
-```{r, results = "hide"}
+```{r, message = FALSE, warning = FALSE, results = "hide"}
 #Plot function for state data
 library(ggplot2)
 plot.state <- function(df,var_name="state_data.Enrollment_Value"){
@@ -269,7 +269,7 @@ plot.state(Data_Combined[[2]],)
 
 ### Plot Function for County Data
 
-```{r, results = "hide"}
+```{r, message = FALSE, warning = FALSE, results = "hide"}
 #Plot function for county data
 plot.county <- function(df,var_name="county_data.Enrollment_Value", state = ' AL' , order='Top', n=5){
   plot_data <- df |> 
@@ -307,7 +307,7 @@ plot.county(Data_Combined[[1]],state = ' PA')
 
 ### Running Original Enrollment Data
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 EDU01a <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv",'Enrollment')
 EDU01b <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv",'Enrollment')
 
@@ -322,7 +322,7 @@ plot.county(EDU01ab[[1]], state = ' PA', order = 'Top', n = 8)
 
 ### Run Data Processing Function on Four Other Data Sets
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 PST01a <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01a.csv",'Enrollment')
 PST01b <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01b.csv",'Enrollment')
 PST01c <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01c.csv",'Enrollment')
@@ -333,7 +333,7 @@ PST01abcd <- CombiningFunction(PST01a, PST01b, PST01c, PST01d)
 
 ### Plot Other Data Sets with Plot Function
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
 plot.state(PST01abcd[[2]])
 plot.county(PST01abcd[[1]], state =' CA', order = 'Top', n = 15)
 plot.county(PST01abcd[[1]], state = ' TX', order = 'Top', n = 4)
