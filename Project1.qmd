@@ -313,7 +313,8 @@ plot.county <- function(df,var_name="county_data.Enrollment_Value",
     #divide y-axis values by 1000 so that the y-axis labels are more readable
     geom_point() + #create scatterplot
     labs(y="Average Enrollment (in thousands)", x="County") + 
-    scale_x_discrete(guide = guide_axis(n.dodge = 2)) 
+    scale_x_discrete(guide = guide_axis(n.dodge = 2)) +
+    theme(axis.text.x =element_text(size=5.5))
   #stagger x-axis labels so no overlap
 }
 
