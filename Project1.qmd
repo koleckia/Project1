@@ -1,5 +1,7 @@
 ---
 title: "Project1"
+author: Alexis Kolecki, Jessie Heise
+date: 6/17/2025
 format: pdf
 editor: visual
 ---
@@ -8,28 +10,31 @@ editor: visual
 
 ### Step 1
 
-```{r}
+```{r, message = FALSE, warning = FALSE}
+# Load libraries
 library(dplyr)
 library(tidyr)
 
-# Read in data
+# Read in EDU01a.csv data
 first_data <- read.csv('EDU01a.csv')
 
-# Select columns
+# Select only the following columns: Area_name (rename as area_name), STCOU, any column that ends in "D"
 selected_columns <- first_data |> 
   select(area_name = Area_name, STCOU, ends_with("D"))
 
+# Display the first 5 rows of the new data set
 head(selected_columns, n = 5)
 ```
 
 ### Step 2
 
 ```{r}
-# Convert data into long format
+# Convert data into long format- each row only has one enrollment value for that Area_name
 pivoted_data <- selected_columns |>
   pivot_longer(cols=3:12,names_to="Enrollment", values_to ="Enrollment_Value") |>
-  select(-STCOU)
+  select(-STCOU) #drop the STCOU column since we aren't using it
 
+# Display first 5 rows of the new data set
 head(pivoted_data, n = 5)
 ```
 
@@ -38,30 +43,34 @@ head(pivoted_data, n = 5)
 ```{r}
 # Separate enrollment variable
 long_updated <- pivoted_data |>
-   mutate(Survey = substr(Enrollment, 1,7), Year = as.numeric(substr(Enrollment, 8,9))) |>
-  mutate(Year=ifelse(Year>80, 1900+Year,2000+Year)) |>
+   mutate(Survey = substr(Enrollment, 1,7), #pull measurement info
+          Year = as.numeric(substr(Enrollment, 8,9))) |> #pull yr/make numeric
+  mutate(Year=ifelse(Year>80, 1900+Year,2000+Year)) |> #format year to four digits
   select(area_name, Survey, Year, Enrollment_Value)
 
+# Display first 5 rows of new data set
 head(long_updated, n = 5)
 ```
 
 ### Step 4
 
 ```{r}
-# Create two new data sets: county_tibble and state_tibble
+# Create two new data sets: one with only county data and one with only non-county data
 county_tibble <- long_updated|>
   filter(grepl(",",area_name)) |> 
   mutate(county=grep(pattern =", \\w\\w", area_name))
 
 class(county_tibble) <- c("county", class(county_tibble))
-  
+
+# Print the first 10 rows of the county tibble
 head(county_tibble, n = 10)
 
 state_tibble <- long_updated|>
   filter(!grepl(",",area_name)) 
 
 class(state_tibble) <- c("state", class(state_tibble))
-  
+
+# Print the first 10 rows of the state tibble
 head(state_tibble, n = 10)
 ```
 
@@ -95,7 +104,9 @@ state_tibble <- state_tibble |>
 
 ## Data Processing Function Writing
 
-```{r}
+### Write one function that does steps 1 & 2 above
+
+```{r, results = "hide"}
 # Function for reading in code
 read_csv_code <- function(filename,column_name){
   library(dplyr)
@@ -114,7 +125,11 @@ function_for_steps_1_2 <- function(first_data, column_name){
   print(pivoted_data)
   return(pivoted_data)
 }
+```
 
+### Write a function that takes in the output of step 2 and does step 3 above
+
+```{r}
 # Function taking in the output from step 2 and executing step 3
 function_for_step_3 <- function(pivoted_data,column_name){
   long_updated <- pivoted_data |>
@@ -123,8 +138,12 @@ function_for_step_3 <- function(pivoted_data,column_name){
     select(area_name, Survey, Year, Enrollment_Value)
   return(long_updated)
 }
+```
 
-# Function for step 4
+### Write a function to do step 5
+
+```{r}
+# Function for step 4 (need before step 5)
 function_for_step_4 <- function(long_updated){
   county_tibble <- long_updated|>
     filter(grepl(",",area_name)) |> 
@@ -142,7 +161,11 @@ function_for_step_5 <- function(county_tibble){
   mutate(state = substr(area_name, nchar(area_name)-2, nchar(area_name)))
   return(county_tibble)
 }
+```
 
+### Write a function to do step 6
+
+```{r}
 # Function for step 6
 function_for_step_6 <- function(state_tibble){
   state_tibble <- state_tibble |>
@@ -161,7 +184,11 @@ function_for_step_6 <- function(state_tibble){
   )
   return(state_tibble)
 }
+```
 
+### Write a function that takes the output from step 3 and creates the two tibbles in step 4, calls the above two functions to perform steps 5 and 6, and returns two final tibbles
+
+```{r}
 # Function for steps 4, 5, 6
 function_for_steps_4_5_6 <- function(long_updated){
   county_tibble <- long_updated|>
@@ -175,22 +202,32 @@ function_for_steps_4_5_6 <- function(long_updated){
   results6 <- function_for_step_6(state_tibble)
   return(list=c(county_data =results5, state_data =results6))
 }
-  
+```
 
-# Wrapper function
+### Put the above functions into a wrapper function
+
+```{r}
+# Wrapper function that takes in the URL of a .csv file and the optional argument for the variable name, calls the functions written above, and returns two tibbles
 processing_wrapper <- function(url,column_name){
   result <- read_csv_code(url) |>
     (\(data)function_for_steps_1_2(data,column_name))() |>
     (\(data)function_for_step_3(data,column_name))() |>
     function_for_steps_4_5_6()
-  
   return(result)
 }
+```
 
-# Test wrapper function on EDU01a and EDU01b data
+### Call Wrapper Function to Combine Data
+
+```{r, results = "hide"}
+# Use wrapper function on EDU01a and EDU01b data
 results1 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01b.csv",'Enrollment')
 results2 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU01a.csv",'Enrollment')
+```
 
+### Write Combining Function
+
+```{r, results = "hide"}
 # Combining Function
 CombiningFunction <- function(data1,data2){
   county_data <- bind_rows(data1[1:6],data2[1:6])
@@ -200,18 +237,17 @@ CombiningFunction <- function(data1,data2){
   return(combined)
 }
 
-# Test Combining Function on EDU01a and EDU01b data processed above
+# Use Combining Function on EDU01a and EDU01b data processed above
 Data_Combined<-CombiningFunction(results1,results2)
 class(Data_Combined)
 class(Data_Combined$county_data)
-
 ```
 
 ## Writing a Generic Function for Summarizing
 
 ### Plot Function for State Data
 
-```{r}
+```{r, results = "hide"}
 #Plot function for state data
 library(ggplot2)
 plot.state <- function(df,var_name="state_data.Enrollment_Value"){
@@ -220,7 +256,9 @@ plot.state <- function(df,var_name="state_data.Enrollment_Value"){
     filter(state_data.division != 'ERROR') 
    
   print(plot_data)
-  ggplot(data=plot_data, aes(x=state_data.Year,y= y_axis,color=state_data.division)) + geom_line() +
+  ggplot(data=plot_data, 
+         aes(x=state_data.Year,y= y_axis,color=state_data.division)) + 
+    geom_line() +
     labs(y="Average Enrollment", x="Year", color="Division")
 }
 
@@ -230,14 +268,15 @@ plot.state(Data_Combined[[2]],)
 
 ### Plot Function for County Data
 
-```{r}
+```{r, results = "hide"}
 #Plot function for county data
-plot.county <- function(df,var_name="county_data.Enrollment_Value", state = ' AL' ,order='Top', n=5){
+plot.county <- function(df,var_name="county_data.Enrollment_Value", state = ' AL' , order='Top', n=5){
   plot_data <- df |> 
     filter(county_data.state== state) |>
     group_by(county_data.area_name) |>
     summarize(y_axis=mean(get(var_name))) 
-   
+
+#if else for the top or bottom parameter
   if(order=='Top'){
     plot_data2 <- plot_data |>
       arrange(desc(y_axis)) |>
@@ -248,38 +287,14 @@ plot.county <- function(df,var_name="county_data.Enrollment_Value", state = ' AL
       arrange(y_axis)|>
       slice_head(n= n)
   }
-
+  
   print(plot_data2)
-  ggplot(data=plot_data2, aes(x=county_data.area_name,y= y_axis/1000)) + geom_point() + labs(y="Average Enrollment (in thousands)", x="Area Name"
-  )
+  ggplot(data=plot_data2, aes(x=county_data.area_name,y= y_axis/1000, group = 1)) + #divide y-axis values by 1000 so that the y-axis labels are more readable
+    geom_point() + #create scatterplot
+    labs(y="Average Enrollment (in thousands)", x="County") + 
+    scale_x_discrete(guide = guide_axis(n.dodge = 2)) #stagger x-axis labels so no overlap
 }
-plot.county <- function(df,var_name="county_data.Enrollment_Value", state = ' AL',group='TOP',
-                        n=5){
-   plot_data <- df |> filter(county_data.state== state) |>
-   group_by(county_data.area_name)|>
-     summarize(y_axis=mean(get(var_name))) 
-   
-   print(plot_data)
-   if(group=='TOP'){
-     plot_data2 <- plot_data |>
-       arrange(desc(y_axis)) |>
-       slice_head(n= n) 
-   } else {
-     plot_data2 <- plot_data |> 
-       arrange(y_axis)|>
-       slice_head(n= n) 
-   }
 
-   plot_data2$county_data.area_name <-factor(plot_data2$county_data.area_name, 
-                                             levels= plot_data2$county_data.area_name)
-    
-   minimum <- floor(min(plot_data2$y_axis))
-   maximum <-ceiling(max(plot_data2$y_axis))
-   
-   print(plot_data2)
-   ggplot(data=plot_data2, aes(x=county_data.area_name,y= y_axis, group =1)) + geom_line() +geom_point() + labs(y="Average Enrollment", x="County Name") +scale_y_continuous(limits=c(minimum,maximum),breaks = seq(minimum,maximum,10000))
-
-}
 
 plot.county(Data_Combined[[1]])
 plot.county(Data_Combined[[1]],state = ' AZ')
