@@ -228,19 +228,11 @@ results2 <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/EDU0
 ### Write Combining Function
 
 ```{r, results = "hide"}
-# Combining Function
-CombiningFunction <- function(data1,data2){
-#  input <- list(...)
-#  for(i in 1:length(input)) {
-#    current_input_c <- input[[i]]
-#    county_data <- bind_rows(current_input_c[1:6])
-#    return(county_data)
-#    current_input_s <- input[[i]]
-#    noncounty_data <- bind_rows(current_input_s[7:11])
-#    return(noncounty_data)
-#  }
-  county_data <- bind_rows(data1[1:6],data2[1:6])
-  noncounty_data <- bind_rows(data1[7:11],data2[7:11])
+# Combining Function with minimum 2 and maximum 4 input datasets
+CombiningFunction <- function(data1,data2,data3 = NULL,data4 = NULL){
+  input <- list(data1,data2,data3,data4)
+  county_data <- bind_rows(input[[1]][1:6],input[[2]][1:6],input[[3]][1:6],input[[4]][1:6])
+  noncounty_data <- bind_rows(input[[1]][7:11],input[[2]][7:11],input[[3]][7:11],input[[4]][7:11])
     combined <- list(county_data=tibble(county_data),
                      noncounty_data=tibble(noncounty_data))
   return(combined)
@@ -248,8 +240,8 @@ CombiningFunction <- function(data1,data2){
 
 # Use Combining Function on EDU01a and EDU01b data processed above
 Data_Combined<-CombiningFunction(results1,results2)
-class(Data_Combined)
-class(Data_Combined$county_data)
+#class(Data_Combined)
+#class(Data_Combined$county_data)
 ```
 
 ## Writing a Generic Function for Summarizing
@@ -336,9 +328,7 @@ PST01b <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01b
 PST01c <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01c.csv",'Enrollment')
 PST01d <- processing_wrapper("https://www4.stat.ncsu.edu/~online/datasets/PST01d.csv",'Enrollment')
 
-PST01ab <- CombiningFunction(PST01a, PST01b)
-PST01abc <- CombiningFunction(PST01ab, PST01c)
-PST01abcd <- CombiningFunction(PST01abc, PST01d)
+PST01abcd <- CombiningFunction(PST01a, PST01b, PST01c, PST01d)
 ```
 
 ### Plot Other Data Sets with Plot Function
